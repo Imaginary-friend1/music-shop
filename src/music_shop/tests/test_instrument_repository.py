@@ -30,6 +30,24 @@ def test_get_missing_instrument(tmp_path):
 
     assert result is None
 
+def test_update_instrument(tmp_path):
+    database_file = tmp_path / "test_music_shop.db"
+
+    database = Database(str(database_file))
+    database.create_tables()
+
+    repository = InstrumentRepository(str(database_file))
+
+    instrument = Instrument(article="GTR001", name="Yamaha F310", price=25000)
+
+    repository.add(instrument, "string")
+
+    repository.update(article="GTR001", name="Yamaha F310 Natural", price=28000)
+
+    result = repository.get_by_article("GTR001")
+
+    assert result == ("GTR001", "Yamaha F310 Natural", 28000, "string")
+
 def test_delete_instrument(tmp_path):
     database_file = tmp_path / "test_music_shop.db"
 
@@ -38,11 +56,7 @@ def test_delete_instrument(tmp_path):
 
     repository = InstrumentRepository(str(database_file))
 
-    instrument = Instrument(
-        article="GTR001",
-        name="Yamaha F310",
-        price=25000,
-    )
+    instrument = Instrument(article="GTR001", name="Yamaha F310", price=25000)
 
     repository.add(instrument, "string")
     repository.delete("GTR001")
