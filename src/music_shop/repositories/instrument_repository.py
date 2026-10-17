@@ -8,7 +8,11 @@ class InstrumentRepository:
     def __init__(self, database_name: str = "music_shop.db"):
         self.database_name = database_name
 
-    def add(self, instrument: Instrument, instrument_type: str) -> None:
+    def add(
+        self,
+        instrument: Instrument,
+        instrument_type: str,
+    ) -> None:
         """Добавляет инструмент в базу данных."""
         connection = sqlite3.connect(self.database_name)
 
@@ -51,6 +55,31 @@ class InstrumentRepository:
         connection.close()
 
         return result
+
+    def update(
+        self,
+        article: str,
+        name: str,
+        price: int,
+    ) -> None:
+        """Изменяет название и цену инструмента."""
+        connection = sqlite3.connect(self.database_name)
+
+        connection.execute(
+            """
+            UPDATE instruments
+            SET name = ?, price = ?
+            WHERE article = ?
+            """,
+            (
+                name,
+                price,
+                article,
+            ),
+        )
+
+        connection.commit()
+        connection.close()
 
     def delete(self, article: str) -> None:
         """Удаляет инструмент по артикулу."""
