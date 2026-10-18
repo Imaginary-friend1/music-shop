@@ -1,11 +1,12 @@
 import tkinter as tk
 from tkinter import messagebox
 
-from music_shop.database.database import Database
+from music_shop.models.instrument import Instrument
+from music_shop.models.receipt import Receipt
 from music_shop.repositories.instrument_repository import InstrumentRepository
 from music_shop.services.product_service import ProductService
-from music_shop.models.receipt import Receipt
 from music_shop.services.receipt_service import ReceiptService
+
 
 class MusicShopApp:
     """Графический интерфейс музыкального магазина."""
@@ -13,10 +14,6 @@ class MusicShopApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Музыкальный магазин")
-        self.root.geometry("700x500")
-
-        self.database = Database()
-        self.database.create_tables()
 
         self.repository = InstrumentRepository()
         self.product_service = ProductService(self.repository)
@@ -24,76 +21,47 @@ class MusicShopApp:
         self.create_widgets()
 
     def create_widgets(self):
-        """Создаёт элементы интерфейса."""
+        """Создаёт элементы главного окна."""
+        tk.Label(self.root, text="Артикул товара:").pack()
 
-        title = tk.Label(
-            self.root,
-            text="Информационная система музыкального магазина",
-            font=("Arial", 16),
-        )
-        title.pack(pady=20)
-
-        search_frame = tk.Frame(self.root)
-        search_frame.pack(pady=10)
-
-        tk.Label(
-            search_frame,
-            text="Артикул:",
-        ).pack(side=tk.LEFT)
-
-        self.article_entry = tk.Entry(search_frame)
-        self.article_entry.pack(
-            side=tk.LEFT,
-            padx=10,
-        )
+        self.article_entry = tk.Entry(self.root)
+        self.article_entry.pack()
 
         tk.Button(
-            search_frame,
-            text="Найти",
+            self.root,
+            text="Найти товар",
             command=self.search_product,
-        ).pack(side=tk.LEFT)
+        ).pack()
 
-        self.result_label = tk.Label(
+        self.result_label = tk.Label(self.root, text="")
+        self.result_label.pack()
+
+        tk.Button(
             self.root,
-            text="Введите артикул товара",
-            font=("Arial", 12),
-        )
-        self.result_label.pack(pady=20)
-
-        buttons_frame = tk.Frame(self.root)
-        buttons_frame.pack(pady=20)
-
-        tk.Button(
-            buttons_frame,
             text="Добавить товар",
-            width=20,
             command=self.add_product,
-        ).pack(pady=5)
+        ).pack()
 
         tk.Button(
-            buttons_frame,
+            self.root,
             text="Изменить товар",
-            width=20,
             command=self.update_product,
-        ).pack(pady=5)
+        ).pack()
 
         tk.Button(
-            buttons_frame,
+            self.root,
             text="Удалить товар",
-            width=20,
             command=self.delete_product,
-        ).pack(pady=5)
+        ).pack()
 
         tk.Button(
-            buttons_frame,
+            self.root,
             text="Сформировать чек",
-            width=20,
             command=self.create_receipt,
-        ).pack(pady=5)
+        ).pack()
 
     def search_product(self):
         """Ищет товар по артикулу."""
-
         article = self.article_entry.get().strip()
 
         if not article:
@@ -106,9 +74,7 @@ class MusicShopApp:
         product = self.product_service.get_product(article)
 
         if product is None:
-            self.result_label.config(
-                text="Товар не найден."
-            )
+            self.result_label.config(text="Товар не найден.")
             return
 
         self.result_label.config(
@@ -121,297 +87,246 @@ class MusicShopApp:
         )
 
     def add_product(self):
-    """Открывает форму добавления товара."""
+        """Открывает окно добавления товара."""
+        window = tk.Toplevel(self.root)
+        window.title("Добавить товар")
 
-    window = tk.Toplevel(self.root)
-    window.title("Добавление товара")
-    window.geometry("400x350")
+        tk.Label(window, text="Артикул:").pack()
+        article_entry = tk.Entry(window)
+        article_entry.pack()
 
-    tk.Label(window, text="Артикул:").pack(pady=5)
-    article_entry = tk.Entry(window)
-    article_entry.pack()
+        tk.Label(window, text="Название:").pack()
+        name_entry = tk.Entry(window)
+        name_entry.pack()
 
-    tk.Label(window, text="Название:").pack(pady=5)
-    name_entry = tk.Entry(window)
-    name_entry.pack()
+        tk.Label(window, text="Цена:").pack()
+        price_entry = tk.Entry(window)
+        price_entry.pack()
 
-    tk.Label(window, text="Цена:").pack(pady=5)
-    price_entry = tk.Entry(window)
-    price_entry.pack()
+        tk.Label(window, text="Тип:").pack()
+        type_entry = tk.Entry(window)
+        type_entry.pack()
 
-    tk.Label(window, text="Тип инструмента:").pack(pady=5)
-    type_entry = tk.Entry(window)
-    type_entry.pack()
+        def save_product():
+            """Сохраняет новый товар."""
+            article = article_entry.get().strip()
+            name = name_entry.get().strip()
+            price_text = price_entry.get().strip()
+            instrument_type = type_entry.get().strip()
 
-    def save_product():
-        """Сохраняет новый товар."""
+            if not article or not name or not price_text or not instrument_type:
+                messagebox.showwarning(
+                    "Предупреждение",
+                    "Заполните все поля.",
+                )
+                return
 
-        article = article_entry.get().strip()
-        name = name_entry.get().strip()
-        price = price_entry.get().strip()
-        instrument_type = type_entry.get().strip()
+            try:
+                price = int(price_text)
+            except ValueError:
+                messagebox.showwarning(
+                    "Предупреждение",
+                    "Цена должна быть числом.",
+                )
+                return
 
-        if not article or not name or not price or not instrument_type:
-            messagebox.showwarning(
-                "Предупреждение",
-                "Заполните все поля.",
+            instrument = Instrument(article, name, price)
+
+            self.product_service.add_product(
+                instrument,
+                instrument_type,
             )
-            return
 
-        try:
-            price = int(price)
-        except ValueError:
-            messagebox.showwarning(
-                "Предупреждение",
-                "Цена должна быть числом.",
+            messagebox.showinfo(
+                "Успешно",
+                "Товар добавлен.",
             )
-            return
 
-        from music_shop.models.instrument import Instrument
+            window.destroy()
 
-        instrument = Instrument(
-            article=article,
-            name=name,
-            price=price,
-        )
-
-        self.product_service.add_product(
-            instrument,
-            instrument_type,
-        )
-
-        messagebox.showinfo(
-            "Готово",
-            "Товар успешно добавлен.",
-        )
-
-        window.destroy()
-
-    tk.Button(
-        window,
-        text="Сохранить",
-        command=save_product,
-    ).pack(pady=20)
+        tk.Button(
+            window,
+            text="Сохранить",
+            command=save_product,
+        ).pack()
 
     def update_product(self):
-    """Открывает форму изменения товара."""
+        """Открывает окно изменения товара."""
+        window = tk.Toplevel(self.root)
+        window.title("Изменить товар")
 
-    window = tk.Toplevel(self.root)
-    window.title("Изменение товара")
-    window.geometry("400x350")
+        tk.Label(window, text="Артикул:").pack()
+        article_entry = tk.Entry(window)
+        article_entry.pack()
 
-    tk.Label(window, text="Артикул товара:").pack(pady=5)
-    article_entry = tk.Entry(window)
-    article_entry.pack()
+        tk.Label(window, text="Новое название:").pack()
+        name_entry = tk.Entry(window)
+        name_entry.pack()
 
-    tk.Label(window, text="Новое название:").pack(pady=5)
-    name_entry = tk.Entry(window)
-    name_entry.pack()
+        tk.Label(window, text="Новая цена:").pack()
+        price_entry = tk.Entry(window)
+        price_entry.pack()
 
-    tk.Label(window, text="Новая цена:").pack(pady=5)
-    price_entry = tk.Entry(window)
-    price_entry.pack()
+        def save_changes():
+            """Сохраняет изменения товара."""
+            article = article_entry.get().strip()
+            name = name_entry.get().strip()
+            price_text = price_entry.get().strip()
 
-    def update():
-        """Сохраняет изменения товара."""
+            if not article or not name or not price_text:
+                messagebox.showwarning(
+                    "Предупреждение",
+                    "Заполните все поля.",
+                )
+                return
 
-        article = article_entry.get().strip()
-        name = name_entry.get().strip()
-        price = price_entry.get().strip()
+            try:
+                price = int(price_text)
+            except ValueError:
+                messagebox.showwarning(
+                    "Предупреждение",
+                    "Цена должна быть числом.",
+                )
+                return
 
-        if not article or not name or not price:
-            messagebox.showwarning(
-                "Предупреждение",
-                "Заполните все поля.",
+            if self.product_service.get_product(article) is None:
+                messagebox.showwarning(
+                    "Предупреждение",
+                    "Товар не найден.",
+                )
+                return
+
+            self.product_service.update_product(
+                article,
+                name,
+                price,
             )
-            return
 
-        try:
-            price = int(price)
-        except ValueError:
-            messagebox.showwarning(
-                "Предупреждение",
-                "Цена должна быть числом.",
+            messagebox.showinfo(
+                "Успешно",
+                "Товар изменён.",
             )
-            return
 
-        product = self.product_service.get_product(article)
+            window.destroy()
 
-        if product is None:
-            messagebox.showwarning(
-                "Предупреждение",
-                "Товар не найден.",
-            )
-            return
-
-        self.product_service.update_product(
-            article=article,
-            name=name,
-            price=price,
-        )
-
-        messagebox.showinfo(
-            "Готово",
-            "Товар успешно изменён.",
-        )
-
-        window.destroy()
-
-    tk.Button(
-        window,
-        text="Сохранить изменения",
-        command=update,
-    ).pack(pady=20)
+        tk.Button(
+            window,
+            text="Сохранить",
+            command=save_changes,
+        ).pack()
 
     def delete_product(self):
-    """Удаляет выбранный товар."""
+        """Удаляет товар по артикулу."""
+        article = self.article_entry.get().strip()
 
-    article = self.article_entry.get().strip()
-
-    if not article:
-        messagebox.showwarning(
-            "Предупреждение",
-            "Введите артикул товара.",
-        )
-        return
-
-    product = self.product_service.get_product(article)
-
-    if product is None:
-        messagebox.showwarning(
-            "Предупреждение",
-            "Товар не найден.",
-        )
-        return
-
-    self.product_service.delete_product(article)
-
-    self.result_label.config(
-        text="Товар удалён."
-    )
-
-    messagebox.showinfo(
-        "Готово",
-        "Товар успешно удалён.",
-    )
-
-    def create_receipt(self):
-    """Открывает форму формирования чека."""
-
-    window = tk.Toplevel(self.root)
-    window.title("Формирование чека")
-    window.geometry("450x400")
-
-    tk.Label(
-        window,
-        text="Номер чека:",
-    ).pack(pady=5)
-
-    receipt_number_entry = tk.Entry(window)
-    receipt_number_entry.pack()
-
-    tk.Label(
-        window,
-        text="Способ оплаты:",
-    ).pack(pady=5)
-
-    payment_entry = tk.Entry(window)
-    payment_entry.pack()
-
-    tk.Label(
-        window,
-        text="Артикул товара:",
-    ).pack(pady=5)
-
-    article_entry = tk.Entry(window)
-    article_entry.pack()
-
-    def save_receipt():
-        """Формирует и сохраняет чек."""
-
-        receipt_number = receipt_number_entry.get().strip()
-        payment_method = payment_entry.get().strip()
-        article = article_entry.get().strip()
-
-        if not receipt_number or not payment_method or not article:
+        if not article:
             messagebox.showwarning(
                 "Предупреждение",
-                "Заполните все поля.",
+                "Введите артикул товара.",
             )
             return
 
-        try:
-            receipt_number = int(receipt_number)
-        except ValueError:
-            messagebox.showwarning(
-                "Предупреждение",
-                "Номер чека должен быть числом.",
-            )
-            return
-
-        product = self.product_service.get_product(article)
-
-        if product is None:
+        if self.product_service.get_product(article) is None:
             messagebox.showwarning(
                 "Предупреждение",
                 "Товар не найден.",
             )
             return
 
-        instrument = self.product_service.repository.get_by_article(
-            article
-        )
+        self.product_service.delete_product(article)
 
-        if instrument is None:
-            messagebox.showwarning(
-                "Предупреждение",
-                "Товар не найден.",
-            )
-            return
-
-        from music_shop.models.instrument import Instrument
-
-        instrument_object = Instrument(
-            article=instrument[0],
-            name=instrument[1],
-            price=instrument[2],
-        )
-
-        receipt = Receipt(
-            receipt_number=receipt_number,
-            payment_method=payment_method,
-        )
-
-        receipt.add_item(instrument_object)
-
-        filename = f"receipt_{receipt_number}.xlsx"
-
-        receipt_service = ReceiptService()
-
-        receipt_service.export_to_excel(
-            receipt,
-            filename,
+        self.result_label.config(
+            text="Товар удалён."
         )
 
         messagebox.showinfo(
-            "Готово",
-            f"Чек сохранён в файл:\n{filename}",
+            "Успешно",
+            "Товар удалён.",
         )
 
-        window.destroy()
+    def create_receipt(self):
+        """Открывает окно формирования чека."""
+        window = tk.Toplevel(self.root)
+        window.title("Формирование чека")
 
-    tk.Button(
-        window,
-        text="Сохранить чек",
-        command=save_receipt,
-    ).pack(pady=25)
+        tk.Label(window, text="Номер чека:").pack()
+        number_entry = tk.Entry(window)
+        number_entry.pack()
 
-def main():
-    """Запускает приложение."""
+        tk.Label(window, text="Способ оплаты:").pack()
+        payment_entry = tk.Entry(window)
+        payment_entry.pack()
 
-    root = tk.Tk()
-    MusicShopApp(root)
-    root.mainloop()
+        tk.Label(window, text="Артикул товара:").pack()
+        article_entry = tk.Entry(window)
+        article_entry.pack()
+
+        def save_receipt():
+            """Формирует и сохраняет чек."""
+            number_text = number_entry.get().strip()
+            payment_method = payment_entry.get().strip()
+            article = article_entry.get().strip()
+
+            if not number_text or not payment_method or not article:
+                messagebox.showwarning(
+                    "Предупреждение",
+                    "Заполните все поля.",
+                )
+                return
+
+            try:
+                receipt_number = int(number_text)
+            except ValueError:
+                messagebox.showwarning(
+                    "Предупреждение",
+                    "Номер чека должен быть числом.",
+                )
+                return
+
+            product = self.product_service.get_product(article)
+
+            if product is None:
+                messagebox.showwarning(
+                    "Предупреждение",
+                    "Товар не найден.",
+                )
+                return
+
+            instrument = Instrument(
+                product[0],
+                product[1],
+                product[2],
+            )
+
+            receipt = Receipt(
+                receipt_number,
+                payment_method,
+            )
+
+            receipt.add_item(instrument)
+
+            filename = f"receipt_{receipt_number}.xlsx"
+
+            ReceiptService().export_to_excel(
+                receipt,
+                filename,
+            )
+
+            messagebox.showinfo(
+                "Успешно",
+                f"Чек сохранён в файл {filename}.",
+            )
+
+            window.destroy()
+
+        tk.Button(
+            window,
+            text="Сохранить чек",
+            command=save_receipt,
+        ).pack()
+
 
 if __name__ == "__main__":
-    main()
+    root = tk.Tk()
+    app = MusicShopApp(root)
+    root.mainloop()
