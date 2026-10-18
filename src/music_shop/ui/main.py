@@ -192,20 +192,106 @@ class MusicShopApp:
     ).pack(pady=20)
 
     def update_product(self):
-        """Открывает форму изменения товара."""
+    """Открывает форму изменения товара."""
+
+    window = tk.Toplevel(self.root)
+    window.title("Изменение товара")
+    window.geometry("400x350")
+
+    tk.Label(window, text="Артикул товара:").pack(pady=5)
+    article_entry = tk.Entry(window)
+    article_entry.pack()
+
+    tk.Label(window, text="Новое название:").pack(pady=5)
+    name_entry = tk.Entry(window)
+    name_entry.pack()
+
+    tk.Label(window, text="Новая цена:").pack(pady=5)
+    price_entry = tk.Entry(window)
+    price_entry.pack()
+
+    def update():
+        """Сохраняет изменения товара."""
+
+        article = article_entry.get().strip()
+        name = name_entry.get().strip()
+        price = price_entry.get().strip()
+
+        if not article or not name or not price:
+            messagebox.showwarning(
+                "Предупреждение",
+                "Заполните все поля.",
+            )
+            return
+
+        try:
+            price = int(price)
+        except ValueError:
+            messagebox.showwarning(
+                "Предупреждение",
+                "Цена должна быть числом.",
+            )
+            return
+
+        product = self.product_service.get_product(article)
+
+        if product is None:
+            messagebox.showwarning(
+                "Предупреждение",
+                "Товар не найден.",
+            )
+            return
+
+        self.product_service.update_product(
+            article=article,
+            name=name,
+            price=price,
+        )
 
         messagebox.showinfo(
-            "Изменение товара",
-            "Здесь будет форма изменения товара.",
+            "Готово",
+            "Товар успешно изменён.",
         )
+
+        window.destroy()
+
+    tk.Button(
+        window,
+        text="Сохранить изменения",
+        command=update,
+    ).pack(pady=20)
 
     def delete_product(self):
-        """Удаляет выбранный товар."""
+    """Удаляет выбранный товар."""
 
-        messagebox.showinfo(
-            "Удаление товара",
-            "Здесь будет удаление товара.",
+    article = self.article_entry.get().strip()
+
+    if not article:
+        messagebox.showwarning(
+            "Предупреждение",
+            "Введите артикул товара.",
         )
+        return
+
+    product = self.product_service.get_product(article)
+
+    if product is None:
+        messagebox.showwarning(
+            "Предупреждение",
+            "Товар не найден.",
+        )
+        return
+
+    self.product_service.delete_product(article)
+
+    self.result_label.config(
+        text="Товар удалён."
+    )
+
+    messagebox.showinfo(
+        "Готово",
+        "Товар успешно удалён.",
+    )
 
     def create_receipt(self):
         """Формирует чек."""
