@@ -119,12 +119,77 @@ class MusicShopApp:
         )
 
     def add_product(self):
-        """Открывает форму добавления товара."""
+    """Открывает форму добавления товара."""
+
+    window = tk.Toplevel(self.root)
+    window.title("Добавление товара")
+    window.geometry("400x350")
+
+    tk.Label(window, text="Артикул:").pack(pady=5)
+    article_entry = tk.Entry(window)
+    article_entry.pack()
+
+    tk.Label(window, text="Название:").pack(pady=5)
+    name_entry = tk.Entry(window)
+    name_entry.pack()
+
+    tk.Label(window, text="Цена:").pack(pady=5)
+    price_entry = tk.Entry(window)
+    price_entry.pack()
+
+    tk.Label(window, text="Тип инструмента:").pack(pady=5)
+    type_entry = tk.Entry(window)
+    type_entry.pack()
+
+    def save_product():
+        """Сохраняет новый товар."""
+
+        article = article_entry.get().strip()
+        name = name_entry.get().strip()
+        price = price_entry.get().strip()
+        instrument_type = type_entry.get().strip()
+
+        if not article or not name or not price or not instrument_type:
+            messagebox.showwarning(
+                "Предупреждение",
+                "Заполните все поля.",
+            )
+            return
+
+        try:
+            price = int(price)
+        except ValueError:
+            messagebox.showwarning(
+                "Предупреждение",
+                "Цена должна быть числом.",
+            )
+            return
+
+        from music_shop.models.instrument import Instrument
+
+        instrument = Instrument(
+            article=article,
+            name=name,
+            price=price,
+        )
+
+        self.product_service.add_product(
+            instrument,
+            instrument_type,
+        )
 
         messagebox.showinfo(
-            "Добавление товара",
-            "Здесь будет форма добавления товара.",
+            "Готово",
+            "Товар успешно добавлен.",
         )
+
+        window.destroy()
+
+    tk.Button(
+        window,
+        text="Сохранить",
+        command=save_product,
+    ).pack(pady=20)
 
     def update_product(self):
         """Открывает форму изменения товара."""
