@@ -1,6 +1,10 @@
 import tkinter as tk
 from tkinter import messagebox
 
+from music_shop.database.database import Database
+from music_shop.repositories.instrument_repository import InstrumentRepository
+from music_shop.services.product_service import ProductService
+
 class MusicShopApp:
     """Графический интерфейс музыкального магазина."""
 
@@ -8,6 +12,12 @@ class MusicShopApp:
         self.root = root
         self.root.title("Музыкальный магазин")
         self.root.geometry("700x500")
+
+        self.database = Database()
+        self.database.create_tables()
+
+        self.repository = InstrumentRepository()
+        self.product_service = ProductService(self.repository)
 
         self.create_widgets()
 
@@ -82,7 +92,7 @@ class MusicShopApp:
     def search_product(self):
         """Ищет товар по артикулу."""
 
-        article = self.article_entry.get()
+        article = self.article_entry.get().strip()
 
         if not article:
             messagebox.showwarning(
@@ -91,8 +101,21 @@ class MusicShopApp:
             )
             return
 
+        product = self.product_service.get_product(article)
+
+        if product is None:
+            self.result_label.config(
+                text="Товар не найден."
+            )
+            return
+
         self.result_label.config(
-            text=f"Поиск товара: {article}"
+            text=(
+                f"Артикул: {product[0]}\n"
+                f"Название: {product[1]}\n"
+                f"Цена: {product[2]} руб.\n"
+                f"Тип: {product[3]}"
+            )
         )
 
     def add_product(self):
@@ -131,7 +154,7 @@ def main():
     """Запускает приложение."""
 
     root = tk.Tk()
-    app = MusicShopApp(root)
+    MusicShopApp(root)
     root.mainloop()
 
 if __name__ == "__main__":
