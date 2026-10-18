@@ -218,5 +218,3 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-music_shop.dbmusic_shop.db
-music_shop.db
