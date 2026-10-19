@@ -144,7 +144,8 @@ def test_create_receipt_opens_window():
                     app.create_receipt()
 
     window.assert_called_once()
- def test_create_widgets():
+    
+def test_create_widgets():
     root = MagicMock()
     app = MusicShopApp.__new__(MusicShopApp)
     app.root = root
