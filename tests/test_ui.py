@@ -11,6 +11,8 @@ def create_app():
         app = MusicShopApp(root)
 
     app.product_service = MagicMock()
+    app.article_entry = MagicMock()
+    app.result_label = MagicMock()
 
     return app
 
