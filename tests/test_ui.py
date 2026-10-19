@@ -1,110 +1,144 @@
-def create_receipt(self):
-    """Открывает форму формирования чека."""
+from unittest.mock import MagicMock, patch
 
-    window = tk.Toplevel(self.root)
-    window.title("Формирование чека")
-    window.geometry("450x400")
+from music_shop.models.instrument import Instrument
+from music_shop.ui.main import MusicShopApp
 
-    tk.Label(
-        window,
-        text="Номер чека:",
-    ).pack(pady=5)
 
-    receipt_number_entry = tk.Entry(window)
-    receipt_number_entry.pack()
+def create_app():
+    root = MagicMock()
 
-    tk.Label(
-        window,
-        text="Способ оплаты:",
-    ).pack(pady=5)
+    with patch.object(MusicShopApp, "create_widgets"):
+        app = MusicShopApp(root)
 
-    payment_entry = tk.Entry(window)
-    payment_entry.pack()
+    app.product_service = MagicMock()
 
-    tk.Label(
-        window,
-        text="Артикул товара:",
-    ).pack(pady=5)
+    return app
 
-    article_entry = tk.Entry(window)
-    article_entry.pack()
 
-    def save_receipt():
-        """Формирует и сохраняет чек."""
+def test_search_product_empty_article():
+    app = create_app()
 
-        receipt_number = receipt_number_entry.get().strip()
-        payment_method = payment_entry.get().strip()
-        article = article_entry.get().strip()
+    app.article_entry.get.return_value = ""
 
-        if not receipt_number or not payment_method or not article:
-            messagebox.showwarning(
-                "Предупреждение",
-                "Заполните все поля.",
-            )
-            return
+    with patch("music_shop.ui.main.messagebox.showwarning") as warning:
+        app.search_product()
 
-        try:
-            receipt_number = int(receipt_number)
-        except ValueError:
-            messagebox.showwarning(
-                "Предупреждение",
-                "Номер чека должен быть числом.",
-            )
-            return
+    warning.assert_called_once()
 
-        product = self.product_service.get_product(article)
 
-        if product is None:
-            messagebox.showwarning(
-                "Предупреждение",
-                "Товар не найден.",
-            )
-            return
+def test_search_product_not_found():
+    app = create_app()
 
-        instrument = self.product_service.repository.get_by_article(
-            article
+    app.article_entry.get.return_value = "UNKNOWN"
+    app.product_service.get_product.return_value = None
+
+    app.search_product()
+
+    app.result_label.config.assert_called_once_with(
+        text="Товар не найден."
+    )
+
+
+def test_search_product_found():
+    app = create_app()
+
+    app.article_entry.get.return_value = "GTR001"
+    app.product_service.get_product.return_value = (
+        "GTR001",
+        "Yamaha F310",
+        25000,
+        "string",
+    )
+
+    app.search_product()
+
+    app.result_label.config.assert_called_once_with(
+        text=(
+            "Артикул: GTR001\n"
+            "Название: Yamaha F310\n"
+            "Цена: 25000 руб.\n"
+            "Тип: string"
         )
+    )
 
-        if instrument is None:
-            messagebox.showwarning(
-                "Предупреждение",
-                "Товар не найден.",
-            )
-            return
 
-        from music_shop.models.instrument import Instrument
+def test_add_product_opens_window():
+    app = create_app()
 
-        instrument_object = Instrument(
-            article=instrument[0],
-            name=instrument[1],
-            price=instrument[2],
-        )
+    with patch("music_shop.ui.main.tk.Toplevel") as window:
+        with patch("music_shop.ui.main.tk.Label"):
+            with patch("music_shop.ui.main.tk.Entry"):
+                with patch("music_shop.ui.main.tk.Button"):
+                    app.add_product()
 
-        receipt = Receipt(
-            receipt_number=receipt_number,
-            payment_method=payment_method,
-        )
+    window.assert_called_once()
 
-        receipt.add_item(instrument_object)
 
-        filename = f"receipt_{receipt_number}.xlsx"
+def test_update_product_opens_window():
+    app = create_app()
 
-        receipt_service = ReceiptService()
+    with patch("music_shop.ui.main.tk.Toplevel") as window:
+        with patch("music_shop.ui.main.tk.Label"):
+            with patch("music_shop.ui.main.tk.Entry"):
+                with patch("music_shop.ui.main.tk.Button"):
+                    app.update_product()
 
-        receipt_service.export_to_excel(
-            receipt,
-            filename,
-        )
+    window.assert_called_once()
 
-        messagebox.showinfo(
-            "Готово",
-            f"Чек сохранён в файл:\n{filename}",
-        )
 
-        window.destroy()
+def test_delete_product_empty_article():
+    app = create_app()
 
-    tk.Button(
-        window,
-        text="Сохранить чек",
-        command=save_receipt,
-    ).pack(pady=25)
+    app.article_entry.get.return_value = ""
+
+    with patch("music_shop.ui.main.messagebox.showwarning") as warning:
+        app.delete_product()
+
+    warning.assert_called_once()
+
+
+def test_delete_product_not_found():
+    app = create_app()
+
+    app.article_entry.get.return_value = "UNKNOWN"
+    app.product_service.get_product.return_value = None
+
+    with patch("music_shop.ui.main.messagebox.showwarning") as warning:
+        app.delete_product()
+
+    warning.assert_called_once()
+
+
+def test_delete_product():
+    app = create_app()
+
+    app.article_entry.get.return_value = "GTR001"
+    app.product_service.get_product.return_value = (
+        "GTR001",
+        "Yamaha F310",
+        25000,
+        "string",
+    )
+
+    with patch("music_shop.ui.main.messagebox.showinfo"):
+        app.delete_product()
+
+    app.product_service.delete_product.assert_called_once_with(
+        "GTR001"
+    )
+
+    app.result_label.config.assert_called_once_with(
+        text="Товар удалён."
+    )
+
+
+def test_create_receipt_opens_window():
+    app = create_app()
+
+    with patch("music_shop.ui.main.tk.Toplevel") as window:
+        with patch("music_shop.ui.main.tk.Label"):
+            with patch("music_shop.ui.main.tk.Entry"):
+                with patch("music_shop.ui.main.tk.Button"):
+                    app.create_receipt()
+
+    window.assert_called_once()
