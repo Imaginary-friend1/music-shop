@@ -1,17 +1,57 @@
-from music_shop.models.keyboard_instrument import KeyboardInstrument
+from music_shop.models.instrument import Instrument
+from music_shop.models.warehouse import Warehouse
 
-def test_create_keyboard_instrument():
-    instrument = KeyboardInstrument(article="KEY001", name="Yamaha P-45", price=55000, key_count=88, has_pedals=True)
 
-    assert instrument.article == "KEY001"
-    assert instrument.name == "Yamaha P-45"
-    assert instrument.price == 55000
-    assert instrument.key_count == 88
-    assert instrument.has_pedals is True
+def test_create_warehouse():
+    warehouse = Warehouse("ул. Музыкальная, 1")
 
-def test_adjust_keys():
-    instrument = KeyboardInstrument(article="KEY001", name="Yamaha P-45", price=55000, key_count=88, has_pedals=True)
+    assert warehouse.address == "ул. Музыкальная, 1"
+    assert warehouse.instruments == []
 
-    instrument.adjust_keys(76)
 
-    assert instrument.key_count == 76
+def test_store_instrument():
+    warehouse = Warehouse("ул. Музыкальная, 1")
+    instrument = Instrument("GTR001", "Yamaha F310", 25000)
+
+    warehouse.store_instrument(instrument)
+
+    assert instrument in warehouse.instruments
+
+
+def test_find_instrument():
+    warehouse = Warehouse("ул. Музыкальная, 1")
+    instrument = Instrument("GTR001", "Yamaha F310", 25000)
+
+    warehouse.store_instrument(instrument)
+
+    result = warehouse.find_instrument("GTR001")
+
+    assert result == instrument
+
+
+def test_remove_instrument():
+    warehouse = Warehouse("ул. Музыкальная, 1")
+    instrument = Instrument("GTR001", "Yamaha F310", 25000)
+
+    warehouse.store_instrument(instrument)
+
+    result = warehouse.remove_instrument("GTR001")
+
+    assert result == instrument
+    assert instrument not in warehouse.instruments
+
+
+def test_find_instrument_not_found():
+    warehouse = Warehouse("ул. Музыкальная, 1")
+
+    result = warehouse.find_instrument("UNKNOWN")
+
+    assert result is None
+
+
+def test_remove_instrument_not_found():
+    warehouse = Warehouse("ул. Музыкальная, 1")
+
+    result = warehouse.remove_instrument("UNKNOWN")
+
+    assert result is None
