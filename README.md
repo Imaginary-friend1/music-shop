@@ -90,7 +90,15 @@ music-shop/
 │           └── main.py
 │
 ├── tests/
+|     ├── test_database.py
+|     ├── test_instrument.py
+|     ├── test_instrument_repository.py
+|     ├── test_instrument_service.py
+|     ├── test_keyboard_instrument.py
+|     ├── test_percucc
+|
 ├── requirements.txt
 ├── README.md
 ├── LICENSE
+├── music_shop.db
 └── .gitignore
