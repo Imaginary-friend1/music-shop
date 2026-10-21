@@ -95,7 +95,17 @@ music-shop/
 |     ├── test_instrument_repository.py
 |     ├── test_instrument_service.py
 |     ├── test_keyboard_instrument.py
-|     ├── test_percucc
+|     ├── test_percussion_instrument.py
+|     ├── test_product_service.py
+|     ├── test_receipt.py
+|     ├── test_receipt_service.py
+|     ├── test_seller.py
+|     ├── test_store.py
+|     ├── test_store_service.py
+|     ├── test_string_instrument.py
+|     ├── test_ui.py
+|     ├── test_warehouse.py
+|     └── test_warehouse_service.py
 |
 ├── requirements.txt
 ├── README.md
